@@ -41,5 +41,10 @@ RuboCop is used for style checks and Overcommit manages Git hooks:
 - Pre-commit: `bundle exec rubocop`
 - Pre-push: `bundle exec rspec`
 
+## Architecture
+- Model: `Models::FundLoad` includes `effective_amount` which defaults to `amount`.
+- Normalization: Stateless, idempotent pipeline (e.g., MondayAmountNormalizer doubles `effective_amount` on Mondays). UTC assumed if timezone missing.
+- Rules: Evaluate a candidate against previously accepted loads via the accepted repository only (attempts are not considered). ISO weeks are used for weekly rules.
+
 ## Prompt Tracking
 All prompts are tracked in `cursor_prompts/` as separate `.md` files with timestamped filenames.

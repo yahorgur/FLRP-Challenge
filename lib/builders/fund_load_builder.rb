@@ -21,11 +21,15 @@ module Builders
       def build(attrs)
         validate_presence!(attrs)
 
+        parsed_amount = parse_amount(attrs[:amount])
+
         Models::FundLoad.new(
           id: to_integer(attrs[:id]),
           customer_id: to_integer(attrs[:customer_id]),
-          amount: parse_amount(attrs[:amount]),
-          timestamp: parse_timestamp(attrs[:timestamp])
+          amount: parsed_amount,
+          timestamp: parse_timestamp(attrs[:timestamp]),
+          effective_amount: attrs[:effective_amount] ? parse_amount(attrs[:effective_amount]) : parsed_amount,
+          accepted: attrs[:accepted]
         )
       end
 

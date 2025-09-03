@@ -15,5 +15,8 @@ module Models
     attribute :customer_id, Types::Integer
     attribute :amount, Types::Float
     attribute :timestamp, Types::Params::DateTime
+    # Effective amount after normalization passes
+    attribute? :effective_amount, Types::Float.optional
+    attribute? :accepted, Types::Bool.optional
   end
 end

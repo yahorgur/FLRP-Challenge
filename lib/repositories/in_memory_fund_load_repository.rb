@@ -24,15 +24,22 @@ module Repositories
       record
     end
 
+    # Return all accepted records.
+    #
+    # Returns: Repositories::InMemoryFundLoadRepository
+    def accepted
+      self.class.new(records.select(&:accepted))
+    end
+
     # Return all records matching the given customer id.
     #
     # Params:
     # - customer_id: Integer or String numeric
     #
-    # Returns: Array<Models::FundLoad>
+    # Returns: Repositories::InMemoryFundLoadRepository
     def find_by_customer_id(customer_id)
       cid = Integer(customer_id)
-      records.select { |r| r.customer_id == cid }
+      self.class.new(records.select { |r| r.customer_id == cid })
     end
 
     # Return all records for the given calendar date.
@@ -40,10 +47,10 @@ module Repositories
     # Params:
     # - date: Date or DateTime
     #
-    # Returns: Array<Models::FundLoad>
+    # Returns: Repositories::InMemoryFundLoadRepository
     def find_by_date(date)
       d = date.to_date
-      records.select { |r| r.timestamp.to_date == d }
+      self.class.new(records.select { |r| r.timestamp.to_date == d })
     end
 
     # Return the record matching the given transaction id.

@@ -15,6 +15,13 @@ module Repositories
       @records = Array(records)
     end
 
+    # Find all accepted records.
+    #
+    # Returns: Array<Models::FundLoad>
+    def accepted
+      raise NotImplementedError, 'Implement in subclass'
+    end
+
     # Find all records by customer identifier.
     #
     # Params:

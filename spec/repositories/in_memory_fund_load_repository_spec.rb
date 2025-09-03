@@ -14,12 +14,12 @@ RSpec.describe Repositories::InMemoryFundLoadRepository do
 
   it 'finds by customer_id' do
     results = repo.find_by_customer_id(10)
-    expect(results.map(&:id)).to contain_exactly(1, 2)
+    expect(results.records.map(&:id)).to contain_exactly(1, 2)
   end
 
   it 'finds by date (calendar day)' do
     results = repo.find_by_date(Date.new(2025, 9, 3))
-    expect(results.map(&:id)).to contain_exactly(1, 2)
+    expect(results.records.map(&:id)).to contain_exactly(1, 2)
   end
 
   it 'finds by transaction id' do
