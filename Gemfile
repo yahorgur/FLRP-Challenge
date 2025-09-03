@@ -8,6 +8,8 @@ source 'https://rubygems.org'
 gem 'rspec'
 
 group :development, :test do
+  gem 'dry-struct'
+  gem 'dry-types'
   gem 'overcommit', require: false
   gem 'rubocop', require: false
 end

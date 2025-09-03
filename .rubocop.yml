@@ -10,9 +10,18 @@ Layout:
 
 Metrics:
   Enabled: true
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
 
 Style:
   Enabled: true
+
+Style/Documentation:
+  Enabled: false
 
 Naming:
   Enabled: true
