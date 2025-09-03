@@ -1,0 +1,18 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+
+Layout:
+  Enabled: true
+
+Metrics:
+  Enabled: true
+
+Style:
+  Enabled: true
+
+Naming:
+  Enabled: true

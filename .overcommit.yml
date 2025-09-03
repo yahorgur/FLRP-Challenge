@@ -1,0 +1,11 @@
+PreCommit:
+  RuboCop:
+    enabled: true
+    description: 'Run RuboCop to lint Ruby code'
+    command: ['bash', '-lc', 'bundle exec rubocop']
+
+PrePush:
+  RSpec:
+    enabled: true
+    description: 'Run RSpec test suite before push'
+    command: ['bash', '-lc', 'bundle exec rspec']
