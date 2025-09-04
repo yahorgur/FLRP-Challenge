@@ -2,3 +2,5 @@
 *.log
 tmp/
 .env
+input.txt
+output.txt
