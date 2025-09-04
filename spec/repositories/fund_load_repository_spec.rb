@@ -14,7 +14,7 @@ RSpec.describe Repositories::FundLoadRepository do
     expect { repo.find_by_date(Date.today) }.to raise_error(NotImplementedError)
   end
 
-  it 'raises for find_by_transaction_id' do
-    expect { repo.find_by_transaction_id(1) }.to raise_error(NotImplementedError)
+  it 'raises for find_by_id' do
+    expect { repo.find_by_id(1) }.to raise_error(NotImplementedError)
   end
 end

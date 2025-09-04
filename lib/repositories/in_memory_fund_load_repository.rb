@@ -25,41 +25,31 @@ module Repositories
     end
 
     # Return all accepted records.
-    #
-    # Returns: Repositories::InMemoryFundLoadRepository
+    # @return [Repositories::InMemoryFundLoadRepository]
     def accepted
       self.class.new(records.select(&:accepted))
     end
 
     # Return all records matching the given customer id.
-    #
-    # Params:
-    # - customer_id: Integer or String numeric
-    #
-    # Returns: Repositories::InMemoryFundLoadRepository
+    # @param customer_id [Integer, String]
+    # @return [Repositories::InMemoryFundLoadRepository]
     def find_by_customer_id(customer_id)
       cid = Integer(customer_id)
       self.class.new(records.select { |r| r.customer_id == cid })
     end
 
     # Return all records for the given calendar date.
-    #
-    # Params:
-    # - date: Date or DateTime
-    #
-    # Returns: Repositories::InMemoryFundLoadRepository
+    # @param date [Date, DateTime]
+    # @return [Repositories::InMemoryFundLoadRepository]
     def find_by_date(date)
       d = date.to_date
-      self.class.new(records.select { |r| r.timestamp.to_date == d })
+      self.class.new(records.select { |r| r.time.utc.to_date == d })
     end
 
     # Return the record matching the given transaction id.
-    #
-    # Params:
-    # - id: Integer or String numeric
-    #
-    # Returns: Models::FundLoad or nil
-    def find_by_transaction_id(id)
+    # @param id [Integer, String]
+    # @return [Models::FundLoad, nil]
+    def find_by_id(id)
       tid = Integer(id)
       records.detect { |r| r.id == tid }
     rescue ArgumentError, TypeError

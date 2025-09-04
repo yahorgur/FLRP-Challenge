@@ -12,21 +12,24 @@ RSpec.describe Rules::DailyAmountLimitRule do
   let(:date) { '2025-09-01T10:00:00Z' } # Monday to test doubling
 
   def add_load(id:, amount:, customer_id: '10', timestamp: date, accepted: true)
-    load = builder.build(id: id, customer_id: customer_id, amount: amount, timestamp: timestamp, accepted:)
+    load = builder.build('id' => id, 'customer_id' => customer_id, 'load_amount' => amount, 'time' => timestamp,
+                         'accepted' => accepted)
     repo.add(load)
   end
 
   it 'passes at exactly 5000 effective' do
-    add_load(id: '1', amount: '4000.00$')
-    add_load(id: '2', amount: '999.99$')
-    cand = builder.build(id: '9', customer_id: '10', amount: '0.01$', timestamp: date, accepted: true)
+    add_load(id: '1', amount: '$4000.00')
+    add_load(id: '2', amount: '$999.99')
+    cand = builder.build('id' => '9', 'customer_id' => '10', 'load_amount' => '$0.01', 'time' => date,
+                         'accepted' => true)
     expect(rule.acceptable?(cand)).to be true
   end
 
   it 'fails when over 5000 effective' do
-    add_load(id: '1', amount: '4000.00$')
-    add_load(id: '2', amount: '1000.00$')
-    cand = builder.build(id: '9', customer_id: '10', amount: '0.01$', timestamp: date, accepted: true)
+    add_load(id: '1', amount: '$4000.00')
+    add_load(id: '2', amount: '$1000.00')
+    cand = builder.build('id' => '9', 'customer_id' => '10', 'load_amount' => '$0.01', 'time' => date,
+                         'accepted' => true)
     expect(rule.acceptable?(cand)).to be false
   end
 end

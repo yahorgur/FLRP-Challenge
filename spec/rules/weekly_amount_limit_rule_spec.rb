@@ -11,32 +11,32 @@ RSpec.describe Rules::WeeklyAmountLimitRule do
   let(:repo) { Repositories::InMemoryFundLoadRepository.new }
   let(:rule) { described_class.new(fund_load_repository: repo) }
 
-  def add_load(id:, amount:, timestamp:, customer_id: '10', accepted: true)
-    load = builder.build(id: id, customer_id: customer_id, amount: amount, timestamp: timestamp, accepted:)
+  def add_load(id:, amount:, time:, customer_id: '10', accepted: true)
+    load = builder.build(id:, customer_id:, load_amount: amount, time:, accepted:)
     repo.add(load)
   end
 
   it 'passes at exactly 20000 effective within same ISO week' do
-    add_load(id: '1', amount: '10000.00$', timestamp: '2025-09-02T10:00:00Z') # Tue
-    add_load(id: '2', amount: '10000.00$', timestamp: '2025-09-03T10:00:00Z') # Wed
-    cand = builder.build(id: '9', customer_id: '10', amount: '0.00$', timestamp: '2025-09-04T10:00:00Z', accepted: true)
+    add_load(id: '1', amount: '$10000.00', time: '2025-09-02T10:00:00Z') # Tue
+    add_load(id: '2', amount: '$10000.00', time: '2025-09-03T10:00:00Z') # Wed
+    cand = builder.build(id: '9', customer_id: '10', load_amount: '$0.00', time: '2025-09-04T10:00:00Z', accepted: true)
     expect(rule.acceptable?(cand)).to be true
   end
 
   it 'fails when over 20000 in same ISO week' do
-    add_load(id: '1', amount: '10000.01$', timestamp: '2025-09-02T10:00:00Z')
-    add_load(id: '2', amount: '10000.00$', timestamp: '2025-09-03T10:00:00Z')
-    cand = builder.build(id: '9', customer_id: '10', amount: '0.00$', timestamp: '2025-09-04T10:00:00Z', accepted: true)
+    add_load(id: '1', amount: '$10000.01', time: '2025-09-02T10:00:00Z')
+    add_load(id: '2', amount: '$10000.00', time: '2025-09-03T10:00:00Z')
+    cand = builder.build(id: '9', customer_id: '10', load_amount: '$0.00', time: '2025-09-04T10:00:00Z', accepted: true)
     expect(rule.acceptable?(cand)).to be false
   end
 
   it 'resets across ISO week boundary' do
-    add_load(id: '1', amount: '15000.00$', timestamp: '2025-09-07T10:00:00Z') # Sunday
+    add_load(id: '1', amount: '$15000.00', time: '2025-09-07T10:00:00Z') # Sunday
     cand = builder.build(
       id: '9',
       customer_id: '10',
-      amount: '10000.00$',
-      timestamp: '2025-09-08T10:00:00Z',
+      load_amount: '$10000.00',
+      time: '2025-09-08T10:00:00Z',
       accepted: true
     ) # Monday
     expect(rule.acceptable?(cand)).to be true

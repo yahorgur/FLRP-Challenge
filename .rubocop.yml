@@ -18,7 +18,7 @@ Metrics/BlockLength:
     - 'spec/**/*'
 
 Metrics/MethodLength:
-  Max: 15
+  Max: 18
 
 Style:
   Enabled: true

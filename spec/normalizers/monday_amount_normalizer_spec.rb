@@ -9,14 +9,14 @@ RSpec.describe Normalizers::MondayAmountNormalizer do
   let(:normalizer) { described_class.new }
 
   it 'keeps amount on non-Monday' do
-    load = builder.build(id: '1', customer_id: '1', amount: '10.00$', timestamp: '2025-09-03T10:00:00Z')
-    load = normalizer.call(load, builder)
-    expect(load.effective_amount).to eq(10.00)
+    load = builder.build('id' => '1', 'customer_id' => '1', 'load_amount' => '$10.00', 'time' => '2025-09-03T10:00:00Z')
+    out = normalizer.call(load, builder)
+    expect(out.effective_load_amount).to eq(10.00)
   end
 
   it 'doubles once on Monday' do
-    load = builder.build(id: '2', customer_id: '1', amount: '10.00$', timestamp: '2025-09-01T10:00:00Z')
-    load = normalizer.call(load, builder)
-    expect(load.effective_amount).to eq(20.0)
+    load = builder.build('id' => '2', 'customer_id' => '1', 'load_amount' => '$10.00', 'time' => '2025-09-01T10:00:00Z')
+    out = normalizer.call(load, builder)
+    expect(out.effective_load_amount).to eq(20.00)
   end
 end

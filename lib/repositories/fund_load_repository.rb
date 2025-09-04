@@ -48,7 +48,7 @@ module Repositories
     # - id: Integer
     #
     # Returns: Models::FundLoad or nil when not found
-    def find_by_transaction_id(_id)
+    def find_by_id(_id)
       raise NotImplementedError, 'Implement in subclass'
     end
   end

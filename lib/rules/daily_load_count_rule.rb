@@ -9,7 +9,8 @@ module Rules
     # @return [Boolean]
     def acceptable?(candidate)
       same_day = fund_load_repository
-                 .accepted.find_by_date(candidate.timestamp)
+                 .accepted
+                 .find_by_date(candidate.time)
                  .find_by_customer_id(candidate.customer_id)
                  .records
       (same_day.count + 1) <= 3

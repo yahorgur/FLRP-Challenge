@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'date'
+require 'bigdecimal'
 require_relative '../models/fund_load'
 
 module Builders
@@ -10,100 +11,69 @@ module Builders
       # Build a Models::FundLoad from untyped attributes.
       #
       # Params:
-      # - attrs: Hash with keys :id, :customer_id, :amount, :timestamp
-      #   - id: Integer or String numeric
-      #   - customer_id: Integer or String numeric
-      #   - amount: String like "99.99$" or "1,234.56$" (commas/$ allowed)
-      #   - timestamp: String; ISO8601 preferred, falls back to DateTime.parse
+      # - attrs: Hash with keys 'id', 'customer_id', 'load_amount', 'time'
+      #   - id [String, Integer]
+      #   - customer_id [String, Integer]
+      #   - load_amount [String, Float] like "$3,318.47" (commas/$ allowed)
+      #   - time [String, Time] ISO8601 or Time
       #
-      # Returns: Models::FundLoad
-      # Raises: ArgumentError when required fields are missing or malformed
+      # @return [Models::FundLoad]
+      # @raise [ArgumentError] when required fields are missing or malformed
       def build(attrs)
-        validate_presence!(attrs)
+        attrs = symbolize_string_keys(attrs)
 
-        parsed_amount = parse_amount(attrs[:amount])
+        parsed_load_amount = parse_load_amount(attrs[:load_amount])
+        effective_load_amount = parse_load_amount(attrs[:effective_load_amount]) || parsed_load_amount
 
         Models::FundLoad.new(
-          id: to_integer(attrs[:id]),
-          customer_id: to_integer(attrs[:customer_id]),
-          amount: parsed_amount,
-          timestamp: parse_timestamp(attrs[:timestamp]),
-          effective_amount: attrs[:effective_amount] ? parse_amount(attrs[:effective_amount]) : parsed_amount,
+          id: attrs[:id].to_i,
+          customer_id: attrs[:customer_id].to_i,
+          load_amount: parsed_load_amount,
+          time: parse_time(attrs[:time]),
+          effective_load_amount: effective_load_amount,
           accepted: attrs[:accepted]
         )
       end
 
       private
 
-      # Validate presence of all required fields.
-      #
-      # Params:
-      # - attrs: Hash of input attributes
-      #
-      # Raises: ArgumentError when any required field is blank
-      def validate_presence!(attrs)
-        %i[id customer_id amount timestamp].each do |key|
-          value = attrs[key]
-          next unless value.nil? || blank_string?(value)
-
-          raise ArgumentError, "Missing required field: #{key}"
+      # Parse load_amount into dollars as Float.
+      # @param value [Float, String]
+      # @return [Float]
+      # @raise [ArgumentError]
+      def parse_load_amount(value)
+        if value.is_a?(Float)
+          value
+        elsif value.is_a?(String)
+          str = value.to_s.delete(',').delete('$').strip
+          bd = BigDecimal(str)
+          bd.to_f
         end
+      rescue StandardError
+        raise ArgumentError, "Invalid load_amount: #{value.inspect}"
       end
 
-      # Check if a value is a blank string (only whitespace).
-      #
-      # Params:
-      # - value: Any
-      #
-      # Returns: Boolean
-      def blank_string?(value)
-        value.respond_to?(:strip) && value.strip.empty?
-      end
-
-      # Convert value to Integer.
-      #
-      # Params:
-      # - value: Integer or String numeric
-      #
-      # Returns: Integer
-      # Raises: ArgumentError on invalid numeric
-      def to_integer(value)
-        Integer(value)
-      rescue ArgumentError, TypeError
-        raise ArgumentError, "Invalid integer: #{value.inspect}"
-      end
-
-      # Parse a currency-like string to Float amount.
-      #
-      # Params:
-      # - value: String or numeric; '$' and ',' are ignored
-      #
-      # Returns: Float
-      # Raises: ArgumentError on invalid format
-      def parse_amount(value)
-        cleaned = value.to_s.delete(',').delete('$')
-        Float(cleaned)
-      rescue ArgumentError, TypeError
-        raise ArgumentError, "Invalid amount: #{value.inspect}"
-      end
-
-      # Parse a timestamp string to DateTime.
-      # Prefers ISO8601; falls back to DateTime.parse.
-      #
-      # Params:
-      # - value: String timestamp
-      #
-      # Returns: DateTime
-      # Raises: ArgumentError on invalid format
-      def parse_timestamp(value)
-        str = value.to_s
-        begin
-          DateTime.iso8601(str)
-        rescue ArgumentError
-          DateTime.parse(str)
+      # Parse ISO8601 time into UTC Time.
+      # @param value [String, Time]
+      # @return [Time]
+      # @raise [ArgumentError]
+      def parse_time(value)
+        if value.is_a?(Time)
+          value.utc
+        elsif value.is_a?(String)
+          Time.iso8601(value).utc
         end
-      rescue ArgumentError, TypeError
-        raise ArgumentError, "Invalid timestamp: #{value.inspect}"
+      rescue StandardError
+        raise ArgumentError, "Invalid time: #{value.inspect}"
+      end
+
+      # Normalize keys to symbols (lowercased).
+      # @param attrs [Hash]
+      # @return [Hash]
+      def symbolize_string_keys(attrs)
+        return attrs if attrs.is_a?(Hash) && attrs.keys.first.is_a?(Symbol)
+
+        attrs.to_h.transform_keys { |k| k.to_s.downcase.to_sym }
       end
     end
   end
