@@ -1,50 +1,69 @@
 # Fund Load Restrictions Processing Challenge
 
-## Project Description
-This project is a Ruby implementation of the Fund Load Restrictions Processing Challenge. It will parse incoming load requests and enforce velocity limits such as:
-- Daily amount limit
-- Weekly amount limit
-- Per-customer load count limit
+## Overview
+A Ruby CLI that processes fund load requests and enforces velocity limits and special rules. Each input line is JSON, built into a `Models::FundLoad`, normalized (e.g., Monday doubles toward limits), evaluated against business rules (daily/weekly amount, daily count, prime-ID sanctions), stored in-memory, and emits a JSON decision per line to the output file.
 
-Optionally, the solution may apply additional “sanctions” or business rules (e.g., handling customers with prime IDs differently, or special handling for requests on Mondays).
+## Assumptions & Decisions
+- ISO week is Mon–Sun for weekly limits
+- Only accepted loads count toward daily/weekly velocity limits
+- Monday loads count double toward limits; stored amount remains unchanged
+- Prime-ID rule is global per calendar day; prime-ID loads must be ≤ $9,999
+- `load_amount` parsing accepts "$1,234.56" and "USD$1,234.56" (letters stripped), commas and `$` allowed
+- Time is treated as UTC; builder parses ISO8601 via `Time.iso8601(...).utc`
 
-## Setup
-1. Clone the repository and enter the project directory:
-```bash
-git clone <your-repo-url>
-cd Fund-Load-Restrictions-Processing-Challenge
-```
-2. Install dependencies:
+## Project Layout
+- `bin/run.rb`: CLI entrypoint, streaming pipeline, accepts ENV `INPUT_PATH`/`OUTPUT_PATH`
+- `lib/models/fund_load.rb`: immutable value object for loads
+- `lib/builders/fund_load_builder.rb`: parses/validates input into `FundLoad`
+- `lib/normalizers/*`: normalization steps (e.g., Monday doubling for limits)
+- `lib/rules/*`: business rules (daily/weekly amount, daily count, prime-id)
+- `lib/repositories/*`: repository abstraction and in-memory implementation
+
+## Requirements
+- Ruby 3.x
+- Install dependencies:
 ```bash
 bundle install
 ```
 
-## Running the Script
-- Entrypoint is `bin/run.rb`.
-- Make it executable:
+## Run
+- Defaults:
 ```bash
-chmod +x bin/run.rb
+./bin/run.rb             # uses input.txt -> output.txt
+./bin/run.rb input.txt output.txt
 ```
-- Example run with optional ENV paths:
+- ENV-based:
 ```bash
-INPUT_PATH=spec/fixtures/input_corner_cases.txt OUTPUT_PATH=tmp/output_corner_cases.txt ./bin/run.rb
+INPUT_PATH=spec/fixtures/input_corner_cases.txt \
+OUTPUT_PATH=tmp/out.txt \
+./bin/run.rb
 ```
+- Behavior:
+  - No STDOUT output on success
+  - Errors to STDERR and exit 1 on fatal issues
 
-## Running Tests
-Run the RSpec test suite:
+## Tests
 ```bash
 bundle exec rspec
 ```
 
-## Code Quality
-RuboCop is used for style checks and Overcommit manages Git hooks:
-- Pre-commit: `bundle exec rubocop`
-- Pre-push: `bundle exec rspec`
+## Quality
+- Lint: `bundle exec rubocop`
+- Overcommit (optional):
+  - Pre-commit: `bundle exec rubocop`
+  - Pre-push: `bundle exec rspec`
+  - Temporarily bypass: `git commit --no-verify` or `OVERCOMMIT_DISABLE=1 git commit -m ...`
 
-## Architecture
-- Model: `Models::FundLoad` includes `effective_amount` which defaults to `amount`.
-- Normalization: Stateless, idempotent pipeline (e.g., MondayAmountNormalizer doubles `effective_amount` on Mondays). UTC assumed if timezone missing.
-- Rules: Evaluate a candidate against previously accepted loads via the accepted repository only (attempts are not considered). ISO weeks are used for weekly rules.
+## Docs
+- Generate API docs:
+```bash
+bundle exec rdoc --quiet --op doc ./lib ./bin
+```
+- `doc/` is ignored by git
 
-## Prompt Tracking
-All prompts are tracked in `cursor_prompts/` as separate `.md` files with timestamped filenames.
+## How to Reproduce
+```bash
+./bin/run.rb input.txt output.txt
+# or with ENV
+INPUT_PATH=input.txt OUTPUT_PATH=output.txt ./bin/run.rb
+```

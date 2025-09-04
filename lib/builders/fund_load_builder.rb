@@ -20,10 +20,10 @@ module Builders
       #
       # Params:
       # - attrs: Hash with keys 'id', 'customer_id', 'load_amount', 'time'
-      #   - id [String, Integer]
-      #   - customer_id [String, Integer]
-      #   - load_amount [String, Float] like "$3,318.47" (commas/$ allowed)
-      #   - time [String, Time] ISO8601 or Time
+      #   - id [String]
+      #   - customer_id [String]
+      #   - load_amount [String] like "$3,318.47" (commas/$ allowed)
+      #   - time [String] ISO8601
       #
       # @return [Models::FundLoad]
       # @raise [ArgumentError] when required fields are missing or malformed

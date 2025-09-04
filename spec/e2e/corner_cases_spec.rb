@@ -22,8 +22,8 @@ RSpec.describe 'End-to-end corner cases', :e2e do
     expect(status.exitstatus).to eq(0), "run.rb failed: #{stderr}"
     expect(stdout).to eq('')
 
-    actual  = File.read(out_path).strip
-    expectd = File.read(expect_path).strip
-    expect(actual).to eq(expectd)
+    actual = File.read(out_path).strip
+    expected = File.read(expect_path).strip
+    expect(actual).to eq(expected)
   end
 end
