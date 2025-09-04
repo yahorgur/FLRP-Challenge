@@ -8,35 +8,84 @@ $LOAD_PATH.unshift File.join(ROOT, 'lib') unless $LOAD_PATH.include?(File.join(R
 
 require 'builders/fund_load_builder'
 require 'repositories/in_memory_fund_load_repository'
+require 'normalizers/monday_amount_normalizer'
+require 'rules/daily_amount_limit_rule'
+require 'rules/daily_load_count_rule'
+require 'rules/weekly_amount_limit_rule'
+require 'rules/prime_id_sanction_rule'
 
-INPUT_PATH = File.join(ROOT, 'input.txt')
-OUTPUT_PATH = File.join(ROOT, 'output.txt')
+# Minimal in-file adapters to orchestrate normalizers and rules
+module Pipeline
+  class NormalizerRunner
+    def initialize(normalizers, load_builder)
+      @normalizers = Array(normalizers)
+      @load_builder = load_builder
+    end
+
+    def run(load)
+      @normalizers.inject(load) { |acc, normalizer| normalizer.call(acc, @load_builder) || acc }
+    end
+  end
+
+  class RulesEngine
+    def initialize(rules)
+      @rules = Array(rules)
+    end
+
+    def accepted?(candidate)
+      @rules.all? { |rule| rule.acceptable?(candidate) }
+    end
+  end
+end
+
+default_input_path = File.join(ROOT, 'input.txt')
+default_output_path = File.join(ROOT, 'output.txt')
+input_path = ARGV[0] && !ARGV[0].strip.empty? ? ARGV[0] : default_input_path
+output_path = ARGV[1] && !ARGV[1].strip.empty? ? ARGV[1] : default_output_path
+
 repo = Repositories::InMemoryFundLoadRepository.new
 builder = Builders::FundLoadBuilder
+normalizers = [Normalizers::MondayAmountNormalizer.new]
+normalizer_runner = Pipeline::NormalizerRunner.new(normalizers, builder)
+rules = [
+  Rules::DailyAmountLimitRule.new(fund_load_repository: repo),
+  Rules::DailyLoadCountRule.new(fund_load_repository: repo),
+  Rules::WeeklyAmountLimitRule.new(fund_load_repository: repo),
+  Rules::PrimeIdSanctionRule.new(fund_load_repository: repo)
+]
+rules_engine = Pipeline::RulesEngine.new(rules)
 
 begin
-  File.foreach(INPUT_PATH, chomp: true) do |line|
-    line = line.strip
-    next if line.empty?
+  File.open(output_path, 'w') do |out_io|
+    File.foreach(input_path, chomp: true) do |line|
+      line = line.strip
+      next if line.empty?
 
-    attrs = JSON.parse(line)
-    load = builder.build(attrs.transform_keys(&:to_sym))
-    repo.add(load)
-  rescue JSON::ParserError => e
-    warn "[skip] invalid JSON: #{e.message}"
-  rescue StandardError => e
-    warn "[skip] #{e.class}: #{e.message}"
+      begin
+        attrs = JSON.parse(line)
+        # Map alternative keys to expected builder keys
+        if attrs.is_a?(Hash)
+          attrs['load_amount'] = attrs['amount'] if attrs.key?('amount') && !attrs.key?('load_amount')
+          attrs['time'] = attrs['timestamp'] if attrs.key?('timestamp') && !attrs.key?('time')
+        end
+        load = builder.build(attrs)
+        normalized = normalizer_runner.run(load)
+        accepted = rules_engine.accepted?(normalized)
+        adjudicated = builder.clone(normalized, accepted:)
+        repo.add(adjudicated)
+
+        out = { id: adjudicated.id.to_s, customer_id: adjudicated.customer_id.to_s, accepted: accepted }
+        out_io.puts(JSON.generate(out))
+      rescue JSON::ParserError => e
+        warn "[skip] invalid JSON: #{e.message}"
+      rescue StandardError => e
+        warn "[skip] #{e.class}: #{e.message}"
+      end
+    end
   end
 rescue Errno::ENOENT => e
   warn "[error] #{e.message}"
   exit 1
-end
-
-File.open(OUTPUT_PATH, 'w') do |f|
-  repo.records.each do |r|
-    out = { id: r.id.to_s, customer_id: r.customer_id.to_s, accepted: false }
-    f.puts(JSON.generate(out))
-  end
 end
 
 exit 0

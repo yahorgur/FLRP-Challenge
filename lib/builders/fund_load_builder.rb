@@ -8,6 +8,14 @@ module Builders
   # Builds validated FundLoad instances from untyped input
   class FundLoadBuilder
     class << self
+      # Clone a Models::FundLoad with overrides.
+      # @param load [Models::FundLoad]
+      # @param overrides [Hash]
+      # @return [Models::FundLoad]
+      def clone(load, overrides = {})
+        Models::FundLoad.new(load.to_h.merge(overrides))
+      end
+
       # Build a Models::FundLoad from untyped attributes.
       #
       # Params:
@@ -23,14 +31,13 @@ module Builders
         attrs = symbolize_string_keys(attrs)
 
         parsed_load_amount = parse_load_amount(attrs[:load_amount])
-        effective_load_amount = parse_load_amount(attrs[:effective_load_amount]) || parsed_load_amount
 
         Models::FundLoad.new(
           id: attrs[:id].to_i,
           customer_id: attrs[:customer_id].to_i,
           load_amount: parsed_load_amount,
           time: parse_time(attrs[:time]),
-          effective_load_amount: effective_load_amount,
+          effective_load_amount: parsed_load_amount,
           accepted: attrs[:accepted]
         )
       end
@@ -38,31 +45,23 @@ module Builders
       private
 
       # Parse load_amount into dollars as Float.
-      # @param value [Float, String]
+      # @param value [String]
       # @return [Float]
       # @raise [ArgumentError]
       def parse_load_amount(value)
-        if value.is_a?(Float)
-          value
-        elsif value.is_a?(String)
-          str = value.to_s.delete(',').delete('$').strip
-          bd = BigDecimal(str)
-          bd.to_f
-        end
+        str = value.to_s.delete(',').delete('$').delete('USD').strip
+        bd = BigDecimal(str)
+        bd.to_f
       rescue StandardError
         raise ArgumentError, "Invalid load_amount: #{value.inspect}"
       end
 
       # Parse ISO8601 time into UTC Time.
-      # @param value [String, Time]
+      # @param value [String]
       # @return [Time]
       # @raise [ArgumentError]
       def parse_time(value)
-        if value.is_a?(Time)
-          value.utc
-        elsif value.is_a?(String)
-          Time.iso8601(value).utc
-        end
+        Time.iso8601(value).utc
       rescue StandardError
         raise ArgumentError, "Invalid time: #{value.inspect}"
       end
