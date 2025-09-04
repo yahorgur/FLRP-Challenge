@@ -38,10 +38,8 @@ module Pipeline
   end
 end
 
-default_input_path = File.join(ROOT, 'input.txt')
-default_output_path = File.join(ROOT, 'output.txt')
-input_path = ARGV[0] && !ARGV[0].strip.empty? ? ARGV[0] : default_input_path
-output_path = ARGV[1] && !ARGV[1].strip.empty? ? ARGV[1] : default_output_path
+INPUT_PATH  = ENV.fetch('INPUT_PATH',  ARGV[0] || 'input.txt')
+OUTPUT_PATH = ENV.fetch('OUTPUT_PATH', ARGV[1] || 'output.txt')
 
 repo = Repositories::InMemoryFundLoadRepository.new
 builder = Builders::FundLoadBuilder
@@ -56,18 +54,13 @@ rules = [
 rules_engine = Pipeline::RulesEngine.new(rules)
 
 begin
-  File.open(output_path, 'w') do |out_io|
-    File.foreach(input_path, chomp: true) do |line|
+  File.open(OUTPUT_PATH, 'w') do |out_io|
+    File.foreach(INPUT_PATH, chomp: true) do |line|
       line = line.strip
       next if line.empty?
 
       begin
         attrs = JSON.parse(line)
-        # Map alternative keys to expected builder keys
-        if attrs.is_a?(Hash)
-          attrs['load_amount'] = attrs['amount'] if attrs.key?('amount') && !attrs.key?('load_amount')
-          attrs['time'] = attrs['timestamp'] if attrs.key?('timestamp') && !attrs.key?('time')
-        end
         load = builder.build(attrs)
         normalized = normalizer_runner.run(load)
         accepted = rules_engine.accepted?(normalized)

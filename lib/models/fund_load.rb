@@ -21,7 +21,7 @@ module Models
   class FundLoad < Dry::Struct
     # External id from input line
     attribute :id, Types::Integer
-    attribute :customer_id, Types::Integer
+    attribute :customer_id, Types::String
     attribute :load_amount, Types::Float
     # Effective amount after normalization passes (in cents)
     attribute :effective_load_amount, Types::Float

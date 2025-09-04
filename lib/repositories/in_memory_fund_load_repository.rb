@@ -34,8 +34,7 @@ module Repositories
     # @param customer_id [Integer, String]
     # @return [Repositories::InMemoryFundLoadRepository]
     def find_by_customer_id(customer_id)
-      cid = Integer(customer_id)
-      self.class.new(records.select { |r| r.customer_id == cid })
+      self.class.new(records.select { |r| r.customer_id == customer_id })
     end
 
     # Return all records for the given calendar date.

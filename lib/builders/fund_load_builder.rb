@@ -34,7 +34,7 @@ module Builders
 
         Models::FundLoad.new(
           id: attrs[:id].to_i,
-          customer_id: attrs[:customer_id].to_i,
+          customer_id: attrs[:customer_id],
           load_amount: parsed_load_amount,
           time: parse_time(attrs[:time]),
           effective_load_amount: parsed_load_amount,

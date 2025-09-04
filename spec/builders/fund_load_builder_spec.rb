@@ -17,7 +17,7 @@ RSpec.describe Builders::FundLoadBuilder do
     record = described_class.build(attrs)
     expect(record).to be_a(Models::FundLoad)
     expect(record.id).to eq(15_887)
-    expect(record.customer_id).to eq(528)
+    expect(record.customer_id).to eq('528')
     expect(record.load_amount).to eq(3_318.47)
     expect(record.effective_load_amount).to eq(3_318.47)
     expect(record.time).to eq(Time.utc(2000, 1, 1, 0, 0, 0))

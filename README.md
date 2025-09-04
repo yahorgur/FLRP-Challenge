@@ -25,9 +25,9 @@ bundle install
 ```bash
 chmod +x bin/run.rb
 ```
-- Example run (reads `input.txt` and writes results to `output.txt`):
+- Example run with optional ENV paths:
 ```bash
-./bin/run.rb input.txt > output.txt
+INPUT_PATH=spec/fixtures/input_corner_cases.txt OUTPUT_PATH=tmp/output_corner_cases.txt ./bin/run.rb
 ```
 
 ## Running Tests
